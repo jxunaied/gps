@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Geolocation</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+    <style>
+      #map {
+        height: 80%;
+      }
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      var map, infoWindow,pos,marker;
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: -34.397, lng: 150.644},
+          zoom: 16
+        });
+
+        infoWindow = new google.maps.InfoWindow;
+ 
+        // Try HTML5 geolocation.
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+
+            };
+
+            infoWindow.setPosition(pos);
+            infoWindow.setContent('Location Found');
+            infoWindow.open(map);
+            map.setCenter(pos);
+          }, function() {
+            handleLocationError(true, infoWindow, map.getCenter());
+          });
+        } else {
+          // Browser doesn't support Geolocation
+          handleLocationError(false, infoWindow, map.getCenter());
+        }
+
+
+      }
+
+      function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+        infoWindow.setContent(browserHasGeolocation ?
+                              'Error: The Geolocation service failed.' :
+                              'Error: Your browser doesn\'t support geolocation.');
+        infoWindow.open(map);
+      }
+
+      //Showing The Live Movement From Server
+       function add(){
+      		$.ajax({
+			    type: 'get',
+			    url: 'save/getloc.php', //php to save the tracked locations
+			     data:"",
+			    success: function(msg) {
+			      if (msg) {
+			      	console.log(msg);
+			      	var a= JSON.parse(msg);
+			      	var x = {
+              			lat: parseFloat(a.lat),
+              			lng: parseFloat(a.lng)
+            		};
+			      	console.log(x);
+			      	infoWindow.setPosition(x);
+		            infoWindow.setContent('Moving.....');
+		            infoWindow.open(map);
+		            map.setCenter(x);
+			      	
+			      } else {
+			        console.log("Very Bad"); 
+			      }
+			       setTimeout(function() {
+			         add();//this will send request again and again after 4 seconds or time you want. For your case i set it seconds for patients sake
+			      }, 4000);
+			    }
+  			});
+
+      }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key= YourApiKey &callback=initMap">
+    </script>
+
+     <button onclick="add()">TrackMe</button>
+  </body>
+</html>
